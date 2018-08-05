@@ -1,3 +1,5 @@
+#ifndef _MAIN_H
+#define _MAIN_H
 #include <pcap.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -44,4 +46,4 @@ typedef struct _arpStructure {
     uint8_t  destinationHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
     uint8_t  destinationProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
 } arpStructure;
-
+#endif

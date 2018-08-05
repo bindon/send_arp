@@ -1,4 +1,3 @@
-#include <main.h>
 #include <util.h>
 
 // Print MAC Address in Ethernet Packet
