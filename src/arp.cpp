@@ -1,6 +1,6 @@
 #include <arp.h>
 
-void receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructure *receivedArpPacket) {
+void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure *receivedArpPacket) {
     arpStructure *arpPacket = NULL;
 
     // packet parsing
@@ -18,15 +18,14 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructur
 
         switch(ntohs(ethernetPacket->type)) {
             case ETHERNET_TYPE_ARP: // value is 0x0806
-                if(!memcmp(ethernetPacket->destinationMac, macAddress, ARP_HARDWARE_LENGTH_ETHERNET)) { 
-                    arpPacket = (arpStructure *)(packet + sizeof(ethernetHeader));
+                arpPacket = (arpStructure *)(packet + sizeof(ethernetHeader));
+                if(!memcmp(arpPacket->sourceProtocolAddress, ipAddress, ARP_PROTOCOL_LENGTH_IP)) { 
 
                     // Print Ethernet Packet
                     printf("[*] Ethernet Information\n");
                     printMacAddress("  - Dest MAC : ", ethernetPacket->destinationMac);
                     printMacAddress("  - Src  MAC : ", ethernetPacket->sourceMac);
-                    printf("  - Type     : [%04x]",  ntohs(ethernetPacket->type));
-
+                    printf("  - Type     : [%04x]", ntohs(ethernetPacket->type));
                     printf("\n");
 
                     // Print ARP Packet
@@ -111,7 +110,7 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     printf("\n");
 
     printf("[+] Get MAC Address\n");
-    receiveArpPacket(handle, ethernetPacket.sourceMac, &receivedArpPacket);
+    receiveArpPacket(handle, arpPacket.destinationProtocolAddress, &receivedArpPacket);
     if(!receivedArpPacket.sourceHardwareAddress) {
         fprintf(stderr, "Receive ARP Packet Error!\n");
         goto end;
