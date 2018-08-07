@@ -39,6 +39,8 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructur
             default:
                 break;
         }
+
+        sleep(1);
     }
 }
 
