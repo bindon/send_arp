@@ -123,7 +123,7 @@ end:
     return ret;
 }
 
-int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, IN char *gatewayIpAddress, IN uint8_t *victimMacAddress) {
+int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, IN char *targetIpAddress, IN uint8_t *victimMacAddress) {
     int ret = EXIT_FAILURE;
     struct in_addr laddr;
     uint8_t buf[sizeof(ethernetHeader) + sizeof(arpStructure)];
@@ -162,7 +162,7 @@ int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIp
     memcpy(arpPacket.destinationHardwareAddress, victimMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
 
     // set source IP Address 
-    if(inet_aton(gatewayIpAddress, &laddr) < 0) {
+    if(inet_aton(targetIpAddress, &laddr) < 0) {
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }

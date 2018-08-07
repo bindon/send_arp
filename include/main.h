@@ -32,7 +32,7 @@ typedef struct _ethernetHeader {
     uint8_t  destinationMac[6];
     uint8_t  sourceMac[6];
     uint16_t type;
-} ethernetHeader;
+} __attribute__((packed)) ethernetHeader;
 
 // ARP Packet Structure
 typedef struct _arpStructure {
@@ -45,5 +45,5 @@ typedef struct _arpStructure {
     uint8_t  sourceProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
     uint8_t  destinationHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
     uint8_t  destinationProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
-} arpStructure;
+} __attribute__((packed)) arpStructure;
 #endif
