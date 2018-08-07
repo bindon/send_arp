@@ -1,10 +1,12 @@
 #include <arp.h>
 
-void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure *receivedArpPacket) {
+int receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure *receivedArpPacket) {
+    int ret = EXIT_FAILURE;
+    int waitCount = 20;
     arpStructure *arpPacket = NULL;
 
     // packet parsing
-    while(!arpPacket) {
+    while(ret && --waitCount) {
         printf("[*] Finding MAC Address...\n");
         struct pcap_pkthdr* header;
         const u_char* packet;
@@ -20,7 +22,6 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure
             case ETHERNET_TYPE_ARP: // value is 0x0806
                 arpPacket = (arpStructure *)(packet + sizeof(ethernetHeader));
                 if(!memcmp(arpPacket->senderProtocolAddress, ipAddress, ARP_PROTOCOL_LENGTH_IP)) { 
-
                     // Print Ethernet Packet
                     printf("[*] Ethernet Information\n");
                     printMacAddress("  - Dest MAC : ", ethernetPacket->destinationMac);
@@ -33,6 +34,7 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure
                     printArpPacketInfo(*arpPacket);
                     memcpy(receivedArpPacket, arpPacket, sizeof(arpStructure));
                     printf("\n");
+                    ret = EXIT_SUCCESS;
                 }
                 break;
             default:
@@ -41,6 +43,8 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure
 
         sleep(1);
     }
+
+    return ret;
 }
 
 int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, OUT uint8_t *victimMacAddress) {
@@ -102,21 +106,22 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     printArpPacketInfo(arpPacket);
     printf("\n");
 
-    printf("[*] Send ARP Packet\n");
-    if(pcap_sendpacket(handle, (const u_char *)&mergedPacket, sizeof(mergedPacket))) {
-        fprintf(stderr, "Send ARP Packet Error!\n");
-        goto end;   
-    }
-    printf("\n");
+    while(1) {
+        printf("[*] Send ARP Packet\n");
+        if(pcap_sendpacket(handle, (const u_char *)&mergedPacket, sizeof(mergedPacket))) {
+            fprintf(stderr, "Send ARP Packet Error!\n");
+            goto end;   
+        }
+        printf("\n");
 
-    printf("[+] Get MAC Address\n");
-    receiveArpPacket(handle, arpPacket.targetProtocolAddress, &receivedArpPacket);
-    if(!receivedArpPacket.senderHardwareAddress) {
-        fprintf(stderr, "Receive ARP Packet Error!\n");
-        goto end;
+        printf("[+] Get MAC Address\n");
+        memset(receivedArpPacket.senderHardwareAddress, 0x00, ARP_HARDWARE_LENGTH_ETHERNET);
+        if(receiveArpPacket(handle, arpPacket.targetProtocolAddress, &receivedArpPacket) == EXIT_SUCCESS) {
+            memcpy(victimMacAddress, receivedArpPacket.senderHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+            break;
+        }
     }
-    memcpy(victimMacAddress, receivedArpPacket.senderHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
-    
+
     ret = EXIT_SUCCESS;
 
 end:
