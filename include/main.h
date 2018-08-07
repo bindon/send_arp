@@ -47,5 +47,11 @@ typedef struct _arpStructure {
     uint8_t  targetHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
     uint8_t  targetProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
 } arpStructure;
+
+// Ethernet + ARP Packet Structure
+typedef struct _mergedStructure {
+    ethernetHeader ethernetPacket;
+    arpStructure   arpPacket;
+} mergedStructure;
 #pragma pack(pop)
 #endif

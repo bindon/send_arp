@@ -46,7 +46,7 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure
 int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, OUT uint8_t *victimMacAddress) {
     int ret = EXIT_FAILURE;
     struct in_addr laddr;
-    uint8_t buf[sizeof(ethernetHeader) + sizeof(arpStructure)];
+    mergedStructure mergedPacket;
     arpStructure receivedArpPacket;
 
     // Initialize Ethernet Packet
@@ -95,15 +95,15 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     memcpy(&arpPacket.targetProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
 
     // assemble Packet
-    memcpy(buf, &ethernetPacket, sizeof(ethernetHeader));
-    memcpy(buf + sizeof(ethernetHeader), &arpPacket, sizeof(arpStructure));
+    memcpy(&mergedPacket.ethernetPacket, &ethernetPacket, sizeof(ethernetHeader));
+    memcpy(&mergedPacket.arpPacket, &arpPacket, sizeof(arpStructure));
 
     printf("[+] Initialize\n");
     printArpPacketInfo(arpPacket);
     printf("\n");
 
     printf("[*] Send ARP Packet\n");
-    if(pcap_sendpacket(handle, buf, sizeof(buf))) {
+    if(pcap_sendpacket(handle, (const u_char *)&mergedPacket, sizeof(mergedPacket))) {
         fprintf(stderr, "Send ARP Packet Error!\n");
         goto end;   
     }
