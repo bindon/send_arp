@@ -27,12 +27,13 @@
 #define RARP_OPERATION_REQUEST       0x03
 #define RARP_OPERATION_REPLY         0x04
 
-// Ethernet Header Structure (14 bytes)
+#pragma pack(push, 1)
+// Ethernet Header Structure
 typedef struct _ethernetHeader {
     uint8_t  destinationMac[6];
     uint8_t  sourceMac[6];
     uint16_t type;
-} __attribute__((packed)) ethernetHeader;
+} ethernetHeader;
 
 // ARP Packet Structure
 typedef struct _arpStructure {
@@ -45,5 +46,6 @@ typedef struct _arpStructure {
     uint8_t  senderProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
     uint8_t  targetHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
     uint8_t  targetProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
-} __attribute__((packed)) arpStructure;
+} arpStructure;
+#pragma pack(pop)
 #endif
