@@ -5,6 +5,7 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructur
 
     // packet parsing
     while(!arpPacket) {
+        printf("[*] Finding MAC Address...\n");
         struct pcap_pkthdr* header;
         const u_char* packet;
         int res = pcap_next_ex(handle, &header, &packet);
@@ -32,12 +33,12 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructur
                     printf("[*] ARP Information\n");
                     printArpPacketInfo(*arpPacket);
                     memcpy(receivedArpPacket, arpPacket, sizeof(arpStructure));
+                    printf("\n");
                 }
                 break;
             default:
                 break;
         }
-        printf("\n");
     }
 }
 
