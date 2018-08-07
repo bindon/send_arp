@@ -66,9 +66,9 @@ end:
 
 // Print ARP Packet Information
 void printArpPacketInfo(IN arpStructure arpPacket) {
-    printMacAddress("  - Source      MAC Address : ", (uint8_t *)arpPacket.sourceHardwareAddress);
-    printMacAddress("  - Destination MAC Address : ", (uint8_t *)arpPacket.destinationHardwareAddress);
-    printIpAddress( "  - Source      IP  Address : ", (uint8_t *)arpPacket.sourceProtocolAddress);
-    printIpAddress( "  - Destination IP  Address : ", (uint8_t *)arpPacket.destinationProtocolAddress);
+    printMacAddress("  - Sender MAC Address : ", (uint8_t *)arpPacket.senderHardwareAddress);
+    printMacAddress("  - Target MAC Address : ", (uint8_t *)arpPacket.targetHardwareAddress);
+    printIpAddress( "  - Sender IP  Address : ", (uint8_t *)arpPacket.senderProtocolAddress);
+    printIpAddress( "  - Target IP  Address : ", (uint8_t *)arpPacket.targetProtocolAddress);
 }
 

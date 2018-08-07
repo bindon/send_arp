@@ -41,9 +41,9 @@ typedef struct _arpStructure {
     uint8_t  hardwareLength;
     uint8_t  protocolLength;
     uint16_t operationCode;
-    uint8_t  sourceHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
-    uint8_t  sourceProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
-    uint8_t  destinationHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
-    uint8_t  destinationProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
+    uint8_t  senderHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
+    uint8_t  senderProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
+    uint8_t  targetHardwareAddress[ARP_HARDWARE_LENGTH_ETHERNET];
+    uint8_t  targetProtocolAddress[ARP_PROTOCOL_LENGTH_IP];
 } __attribute__((packed)) arpStructure;
 #endif
