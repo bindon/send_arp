@@ -5,7 +5,7 @@
 #define IN
 #define OUT
 
-int receiveArpPacket(IN pcap_t *handle, IN uint8_t *macAddress, OUT arpStructure *receivedArpPacket);
-int getVictimMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, OUT uint8_t *victimMacAddress);
-int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *victimIpAddress, IN char *gatewayIpAddress, IN uint8_t *victimMacAddress);
+int receiveArpPacket(IN pcap_t *handle, IN uint8_t *senderIpAddress, OUT arpStructure *receivedArpPacket);
+int getSenderMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *senderIpAddress, OUT uint8_t *senderMacAddress);
+int spoofMacAddress(IN pcap_t *handle, IN char *interfaceName, IN char *senderIpAddress, IN char *targetIpAddress, IN uint8_t *senderMacAddress);
 #endif

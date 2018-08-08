@@ -28,9 +28,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Get Victim MAC Address
-    printf("[*] 1. Get Victim MAC Address\n");
-    getVictimMacAddress(handle, argv[1], argv[2], macAddress);
-    printMacAddress("[*] Victim MAC Address : ", macAddress);
+    printf("[*] 1. Get Sender MAC Address\n");
+    getSenderMacAddress(handle, argv[1], argv[2], macAddress);
+    printMacAddress("[*] Sender MAC Address : ", macAddress);
     printf("\n\n");
 
     // Spoofing MAC Address
